@@ -1,0 +1,1585 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#090d1b">
+<title>StudyQuest V2</title>
+<style>
+:root{
+--bg:#090d1b;--card:#141b30;--card2:#1b2440;
+--text:#f2f4ff;--muted:#a2abc8;--purple:#9868ff;
+--cyan:#28d5e8;--green:#36dfa7;--red:#ff7788;
+--border:#303a56
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font-family:system-ui,Arial,sans-serif}
+button,input,select{font:inherit}
+button{cursor:pointer;border:0;border-radius:11px;padding:11px 15px;background:#7544ed;color:white;font-weight:650}
+button:active{transform:scale(.98)}
+button:disabled{opacity:.5}
+input,select{background:#10182c;border:1px solid var(--border);color:white;border-radius:10px;padding:11px;max-width:100%}
+input[type=checkbox]{width:20px;height:20px;accent-color:var(--green);flex-shrink:0}
+header{text-align:center;padding:23px 12px;background:linear-gradient(140deg,#211640,#102239);border-bottom:1px solid var(--border)}
+header h1{margin:0;font-size:30px;color:#b69aff}
+header p{color:var(--muted);margin:6px}
+nav{display:flex;gap:7px;padding:12px;overflow-x:auto;position:sticky;top:0;background:#090d1bf5;z-index:5;border-bottom:1px solid var(--border)}
+nav button{white-space:nowrap;background:#1a2440;padding:10px}
+nav button.active{background:#7544ed}
+main{max-width:1050px;margin:auto;padding:15px 13px 80px}
+.card{background:linear-gradient(145deg,var(--card),#11172a);border:1px solid var(--border);border-radius:19px;padding:18px;margin-bottom:15px}
+h2{font-size:19px;margin:0 0 15px}
+h3{font-size:16px;margin:10px 0}
+small,.muted{color:var(--muted)}
+.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.stat{background:var(--card2);border-radius:14px;padding:15px;text-align:center}
+.stat strong{display:block;font-size:25px;color:var(--cyan);margin-top:5px}
+.bar{height:12px;background:#303a52;border-radius:20px;overflow:hidden;margin:10px 0}
+.fill{height:100%;width:0;background:linear-gradient(90deg,var(--purple),var(--cyan));border-radius:20px;transition:width .35s}
+.row{display:flex;justify-content:space-between;gap:10px;align-items:center}
+.actions{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0}
+.secondary{background:#293653}
+.green{background:#087e60}
+.red{background:#9b354c}
+.page{display:none}
+.page.active{display:block}
+.subject{border:1px solid var(--border);border-radius:15px;margin-bottom:12px;overflow:hidden}
+.subjectHead{padding:15px;background:#1b2440;cursor:pointer}
+.subjectBody{padding:12px}
+.chapter{margin:10px 0;border:1px solid var(--border);border-radius:12px;overflow:hidden}
+.chapterHead{background:#202a44;padding:13px;cursor:pointer;font-weight:650}
+.chapterBody{padding:9px}
+.topic{display:flex;align-items:center;gap:11px;padding:12px 7px;border-bottom:1px solid #29334a}
+.topic:last-child{border-bottom:0}
+.topic span{flex:1;font-size:14px;overflow-wrap:anywhere}
+.topic.done span{text-decoration:line-through;color:var(--green)}
+.tiny{font-size:12px;padding:7px 10px;background:#2d3956}
+.timer{text-align:center;font-size:45px;font-weight:750;letter-spacing:2px;margin:20px 0;color:#c5b3ff}
+.goal{padding:14px;border:1px solid var(--border);border-radius:13px;margin:10px 0}
+.log{border-bottom:1px solid var(--border);padding:12px 0;font-size:14px}
+.banner{background:linear-gradient(110deg,#32205d,#143a48);border-radius:16px;padding:18px;margin-bottom:15px}
+select{width:100%}
+.notice{color:#ffd491;font-size:13px;line-height:1.6}
+@media(min-width:750px){.grid{grid-template-columns:repeat(4,1fr)}.timer{font-size:65px}}
+</style>
+</head>
+<body>
+
+<header>
+<h1>🚀 StudyQuest V2</h1>
+<p>Your Personal Entry Test Command Center</p>
+</header>
+
+<nav>
+<button class="active" onclick="page('dashboard',this)">🏠 Dashboard</button>
+<button onclick="page('syllabus',this)">📚 Syllabus</button>
+<button onclick="page('focus',this)">⏱️ Focus</button>
+<button onclick="page('analytics',this)">📈 Analytics</button>
+<button onclick="page('settings',this)">⚙️ Settings</button>
+</nav>
+
+<main>
+
+<section id="dashboard" class="page active">
+<div class="banner">
+<h2 id="greeting">Welcome back! 👋</h2>
+<div id="countdown"></div>
+</div>
+
+<div class="grid">
+<div class="stat">Syllabus Complete<strong id="overallPercent">0%</strong></div>
+<div class="stat">Topics Completed<strong id="completedCount">0</strong></div>
+<div class="stat">Topics Remaining<strong id="remainingCount">0</strong></div>
+<div class="stat">Current Streak<strong id="streakValue">0 🔥</strong></div>
+</div>
+
+<div class="card" style="margin-top:15px">
+<h2>🌍 Overall Preparation Progress</h2>
+<div class="bar"><div id="overallBar" class="fill"></div></div>
+<p id="overallDetails" class="muted"></p>
+</div>
+
+<div class="card">
+<h2>📚 Subject-wise Progress</h2>
+<div id="dashboardSubjects"></div>
+</div>
+
+<div class="card">
+<h2>🏆 Your Achievements</h2>
+<div class="grid">
+<div class="stat">Total XP<strong id="xpValue">0</strong></div>
+<div class="stat">Level<strong id="levelValue">1</strong></div>
+<div class="stat">Study Hours<strong id="totalHours">0</strong></div>
+<div class="stat">Badges<strong id="badgeCount">0</strong></div>
+</div>
+<div id="badges" style="margin-top:15px"></div>
+</div>
+
+<div class="card">
+<h2>🎯 Today's Study Goals</h2>
+<div id="dashboardGoals"></div>
+</div>
+</section>
+
+<section id="syllabus" class="page">
+<div class="card">
+<h2>📚 Complete Syllabus Tracker</h2>
+<p class="muted">Subject → Chapter → Topic. Tick completed topics to update progress.</p>
+<input id="search" placeholder="🔎 Search topics..." oninput="renderSyllabus()" style="width:100%">
+<div class="actions">
+<button onclick="addSubject()">+ Subject</button>
+<button class="secondary" onclick="expandAll(true)">Expand All</button>
+<button class="secondary" onclick="expandAll(false)">Collapse All</button>
+</div>
+<div id="syllabusList"></div>
+</div>
+</section>
+
+<section id="focus" class="page">
+<div class="card">
+<h2>⏱️ Smart Focus Timer</h2>
+<label class="muted">Select Subject</label>
+<select id="timerSubject" onchange="selectTimerSubject()"></select>
+<div class="timer" id="timer">00:00:00</div>
+<p id="timerTarget" style="text-align:center;color:var(--muted)"></p>
+<div class="bar"><div class="fill" id="timerBar"></div></div>
+<div class="actions" style="justify-content:center">
+<button onclick="startTimer()">▶ Start</button>
+<button class="secondary" onclick="pauseTimer()">⏸ Pause</button>
+<button class="green" onclick="finishTimer()">✅ Finish & Save</button>
+<button class="red" onclick="resetTimer()">Reset</button>
+</div>
+<p class="notice">Finish & Save se study time history mein record hoga. Reset unsaved session discard karega. Timer running ho toh subject change nahi kar sakte.</p>
+</div>
+
+<div class="card">
+<h2>🎯 Daily Subject Targets</h2>
+<div id="goalEditor"></div>
+</div>
+</section>
+
+<section id="analytics" class="page">
+<div class="grid">
+<div class="stat">Today<strong id="todayStat">0m</strong></div>
+<div class="stat">Last 7 Days<strong id="weekStat">0h</strong></div>
+<div class="stat">Sessions<strong id="sessionStat">0</strong></div>
+<div class="stat">Total Time<strong id="allTimeStat">0h</strong></div>
+</div>
+
+<div class="card" style="margin-top:15px">
+<h2>📊 Study Time by Subject</h2>
+<div id="subjectAnalytics"></div>
+</div>
+
+<div class="card">
+<h2>📅 Last 7 Days</h2>
+<div id="weeklyChart"></div>
+</div>
+
+<div class="card">
+<h2>📜 Session History</h2>
+<div id="historyList"></div>
+</div>
+</section>
+
+<section id="settings" class="page">
+<div class="card">
+<h2>⚙️ Personal Settings</h2>
+<label>Your Name</label>
+<input id="studentName" style="width:100%;margin:8px 0">
+<label>Entry Test Date</label>
+<input type="date" id="examDate" style="width:100%;margin:8px 0">
+<button onclick="saveSettings()">Save Settings</button>
+</div>
+
+<div class="card">
+<h2>💾 Data Backup</h2>
+<p class="muted">Your progress is stored in this browser. Export backups regularly.</p>
+<div class="actions">
+<button class="green" onclick="exportBackup()">⬇ Export Backup</button>
+<button onclick="document.getElementById('backupFile').click()">⬆ Import Backup</button>
+<input type="file" id="backupFile" accept=".json" hidden onchange="importBackup(event)">
+<button class="red" onclick="resetApp()">Reset Everything</button>
+</div>
+</div>
+
+<div class="card">
+<h2>ℹ️ Important</h2>
+<p class="notice">This is an editable preparation index, not an officially verified 2027 university test syllabus. Physics and Computer requirements depend on your university and admission route.</p>
+<p class="notice">Progress is saved locally. Clearing browser data or changing the preview origin can remove access to saved progress. Mobile and laptop do not automatically sync.</p>
+</div>
+</section>
+
+</main>
+
+<script>
+"use strict";
+
+/* =====================================================
+   COMPLETE SYLLABUS — 55 CHAPTERS
+===================================================== */
+
+const SYLLABUS = [
+
+{
+name:"Basic Mathematics",
+chapters:[
+
+["Number System",[
+"Natural Numbers","Whole Numbers","Integers",
+"Rational Numbers","Irrational Numbers","Real Numbers",
+"Prime Numbers","Composite Numbers","Even and Odd Numbers",
+"Factors and Multiples","HCF and LCM","Divisibility Rules",
+"Remainders","Absolute Values","Number Line","BODMAS / PEMDAS"
+]],
+
+["Arithmetic",[
+"Fractions","Decimals","Percentage",
+"Percentage Increase / Decrease","Ratio and Proportion",
+"Direct Proportion","Inverse Proportion","Average",
+"Weighted Average","Profit and Loss","Discount",
+"Simple Interest","Compound Interest",
+"Speed, Time and Distance","Work and Time",
+"Pipes and Cisterns","Mixtures and Alligation",
+"Ages Problems","Unit Conversion"
+]],
+
+["Basic Algebra",[
+"Variables and Constants","Algebraic Expressions",
+"Algebraic Identities","Factorization","Linear Equations",
+"Simultaneous Equations","Quadratic Equations",
+"Inequalities","Exponents","Radicals / Surds",
+"Logarithms","Word Problems"
+]],
+
+["Geometry",[
+"Lines and Angles","Parallel Lines","Triangles",
+"Pythagoras Theorem","Similar Triangles",
+"Congruent Triangles","Quadrilaterals","Polygons",
+"Circles","Chords and Tangents","Perimeter",
+"Area","Surface Area","Volume",
+"Coordinate Geometry Basics"
+]],
+
+["Basic Statistics",[
+"Mean","Median","Mode","Range","Variance",
+"Standard Deviation","Frequency Distribution",
+"Tables and Graphs","Data Interpretation"
+]]
+
+]
+},
+
+{
+name:"Advanced Mathematics",
+chapters:[
+
+["Sets and Functions",[
+"Sets","Subsets","Union and Intersection",
+"Complement of Sets","Venn Diagrams","Relations",
+"Functions","Domain and Range","Composite Functions",
+"Inverse Functions","Even and Odd Functions",
+"Graphs of Functions"
+]],
+
+["Matrices and Determinants",[
+"Types of Matrices","Matrix Addition",
+"Matrix Multiplication","Transpose",
+"Determinants","Inverse Matrix",
+"Adjoint Matrix","Cramer's Rule",
+"Solving Linear Equations"
+]],
+
+["Complex Numbers",[
+"Imaginary Numbers","Complex Number Operations",
+"Conjugate","Modulus","Argument",
+"Polar Form","De Moivre's Theorem"
+]],
+
+["Quadratic Equations",[
+"Factorization Method","Quadratic Formula",
+"Discriminant","Nature of Roots",
+"Sum and Product of Roots",
+"Forming Quadratic Equations",
+"Graph of Quadratic Functions"
+]],
+
+["Sequences and Series",[
+"Arithmetic Progression (AP)",
+"Geometric Progression (GP)",
+"Harmonic Progression (HP)",
+"nth Term","Sum of Series",
+"Infinite Geometric Series","Sigma Notation"
+]],
+
+["Permutation and Combination",[
+"Factorials","Fundamental Counting Principle",
+"Permutations","Combinations","Arrangements",
+"Selection Problems","Binomial Theorem",
+"Binomial Coefficients"
+]],
+
+["Probability",[
+"Sample Space","Events","Independent Events",
+"Dependent Events","Mutually Exclusive Events",
+"Conditional Probability","Addition Rule",
+"Multiplication Rule","Basic Probability Problems"
+]],
+
+["Trigonometry",[
+"Trigonometric Ratios","Trigonometric Identities",
+"Allied Angles","Trigonometric Equations",
+"Inverse Trigonometric Functions",
+"Graphs of Trigonometric Functions",
+"Double Angle Formulas","Half Angle Formulas",
+"Sum and Difference Formulas","Heights and Distances"
+]],
+
+["Limits and Continuity",[
+"Concept of Limits","Algebraic Limits",
+"Trigonometric Limits","Limits at Infinity",
+"Left-Hand and Right-Hand Limits",
+"Continuity","Discontinuity"
+]],
+
+["Differentiation",[
+"Derivative Basics","Power Rule","Product Rule",
+"Quotient Rule","Chain Rule","Implicit Differentiation",
+"Trigonometric Derivatives",
+"Exponential Derivatives",
+"Logarithmic Derivatives",
+"Higher-Order Derivatives",
+"Maxima and Minima","Tangents and Normals",
+"Rate of Change"
+]],
+
+["Integration",[
+"Basic Integration","Standard Integrals",
+"Substitution Method","Integration by Parts",
+"Partial Fractions","Definite Integrals",
+"Area Under Curves","Applications of Integration"
+]],
+
+["Analytical Geometry",[
+"Cartesian Coordinates","Distance Formula",
+"Midpoint Formula","Section Formula","Slope",
+"Equation of Straight Line","Angle Between Lines",
+"Distance Between Point and Line",
+"Circle Equations","Parabola","Ellipse","Hyperbola"
+]],
+
+["Vectors",[
+"Scalars and Vectors","Vector Addition",
+"Vector Subtraction","Unit Vectors",
+"Dot Product","Cross Product","Magnitude",
+"Direction","Angle Between Vectors",
+"Applications of Vectors"
+]]
+
+]
+},
+
+{
+name:"English",
+chapters:[
+
+["Parts of Speech",[
+"Nouns","Pronouns","Verbs","Adjectives",
+"Adverbs","Prepositions","Conjunctions",
+"Interjections"
+]],
+
+["Tenses",[
+"Present Simple","Present Continuous",
+"Present Perfect","Present Perfect Continuous",
+"Past Simple","Past Continuous",
+"Past Perfect","Past Perfect Continuous",
+"Future Simple","Future Continuous",
+"Future Perfect","Future Perfect Continuous"
+]],
+
+["Grammar",[
+"Subject-Verb Agreement","Articles","Prepositions",
+"Active and Passive Voice",
+"Direct and Indirect Speech",
+"Conditional Sentences","Modal Verbs",
+"Gerunds","Infinitives","Participles",
+"Clauses","Phrases","Parallel Structure",
+"Pronoun Agreement",
+"Comparatives and Superlatives",
+"Sentence Structure","Punctuation"
+]],
+
+["Vocabulary",[
+"Synonyms","Antonyms","One-Word Substitution",
+"Idioms","Phrasal Verbs",
+"Commonly Confused Words",
+"Prefixes","Suffixes","Root Words",
+"Contextual Vocabulary","Analogies"
+]],
+
+["Sentence Correction",[
+"Error Identification","Sentence Improvement",
+"Correct Word Usage","Grammar-Based MCQs",
+"Sentence Completion","Word Order"
+]],
+
+["Reading Comprehension",[
+"Main Idea","Supporting Details",
+"Inference Questions","Tone of Passage",
+"Author's Purpose","Vocabulary in Context",
+"Fact vs Opinion","Conclusion-Based Questions"
+]]
+
+]
+},
+
+{
+name:"IQ / Analytical Reasoning",
+chapters:[
+
+["Number Reasoning",[
+"Number Series","Missing Numbers",
+"Number Patterns","Odd One Out",
+"Mathematical Operations","Number Analogies"
+]],
+
+["Verbal Reasoning",[
+"Word Analogies","Classification",
+"Coding-Decoding","Letter Series",
+"Alphabet Patterns","Blood Relations",
+"Direction Sense","Ranking Problems",
+"Order and Position"
+]],
+
+["Analytical Reasoning",[
+"Seating Arrangements","Linear Arrangements",
+"Circular Arrangements","Scheduling Problems",
+"Grouping Problems","Matching Problems",
+"Logical Conditions","Syllogisms",
+"Statements and Conclusions",
+"Statements and Assumptions",
+"Cause and Effect","Deductive Reasoning"
+]],
+
+["Non-Verbal Reasoning",[
+"Figure Series","Figure Classification",
+"Mirror Images","Water Images",
+"Paper Folding","Embedded Figures",
+"Pattern Completion","Cubes and Dice",
+"Spatial Reasoning"
+]],
+
+["Quantitative Reasoning",[
+"Data Interpretation","Tables","Bar Graphs",
+"Pie Charts","Line Graphs","Data Sufficiency",
+"Quantitative Comparison"
+]]
+
+]
+},
+
+{
+name:"Physics",
+chapters:[
+
+["Measurements",[
+"Physical Quantities","SI Units","Dimensions",
+"Significant Figures","Measurement Errors",
+"Scientific Notation"
+]],
+
+["Vectors and Equilibrium",[
+"Scalars and Vectors","Vector Resolution",
+"Vector Addition","Dot Product","Cross Product",
+"Torque","Conditions of Equilibrium"
+]],
+
+["Motion and Force",[
+"Displacement","Velocity","Acceleration",
+"Equations of Motion","Newton's Laws",
+"Momentum","Impulse","Friction",
+"Projectile Motion"
+]],
+
+["Work and Energy",[
+"Work","Power","Kinetic Energy",
+"Potential Energy","Conservation of Energy",
+"Efficiency"
+]],
+
+["Circular Motion",[
+"Angular Displacement","Angular Velocity",
+"Centripetal Force","Centripetal Acceleration",
+"Rotational Motion","Moment of Inertia"
+]],
+
+["Fluid Dynamics",[
+"Density","Pressure","Continuity Equation",
+"Bernoulli's Equation","Viscosity",
+"Terminal Velocity"
+]],
+
+["Oscillations",[
+"Simple Harmonic Motion","Time Period",
+"Frequency","Simple Pendulum",
+"Spring-Mass System","Resonance"
+]],
+
+["Waves",[
+"Wave Motion","Wave Speed","Wavelength",
+"Frequency","Sound Waves","Stationary Waves",
+"Doppler Effect"
+]],
+
+["Optics",[
+"Reflection","Refraction","Snell's Law",
+"Total Internal Reflection","Interference",
+"Diffraction","Polarization"
+]],
+
+["Heat and Thermodynamics",[
+"Temperature","Thermal Expansion",
+"Specific Heat","Heat Transfer","Gas Laws",
+"First Law of Thermodynamics",
+"Second Law of Thermodynamics",
+"Heat Engines"
+]],
+
+["Electrostatics",[
+"Electric Charge","Coulomb's Law",
+"Electric Field","Electric Potential",
+"Capacitors","Capacitance"
+]],
+
+["Current Electricity",[
+"Electric Current","Ohm's Law",
+"Resistance","Resistivity","Series Circuits",
+"Parallel Circuits","Kirchhoff's Laws",
+"Electrical Power"
+]],
+
+["Electromagnetism",[
+"Magnetic Field","Magnetic Force",
+"Magnetic Flux","Electromagnetic Induction",
+"Faraday's Law","Lenz's Law",
+"Transformers"
+]],
+
+["Alternating Current",[
+"AC Voltage","AC Current","RMS Values",
+"Reactance","Impedance","Resonance"
+]],
+
+["Modern Physics",[
+"Photoelectric Effect","Photons",
+"Atomic Models","Bohr's Model",
+"Energy Levels","X-Rays","Nuclear Physics",
+"Radioactivity","Half-Life",
+"Nuclear Fission","Nuclear Fusion"
+]],
+
+["Electronics",[
+"Semiconductors","Diodes","Transistors",
+"Rectifiers","Logic Gates"
+]]
+
+]
+},
+
+{
+name:"Computer Science",
+chapters:[
+
+["Computer Fundamentals",[
+"Definition of Computer",
+"Characteristics of Computer",
+"Types of Computers",
+"Generations of Computers",
+"Hardware","Software","Input Devices",
+"Output Devices","Storage Devices",
+"CPU","RAM and ROM","Cache Memory"
+]],
+
+["Number Systems",[
+"Binary","Decimal","Octal","Hexadecimal",
+"Number System Conversions",
+"Binary Addition","Binary Subtraction",
+"One's Complement","Two's Complement"
+]],
+
+["Boolean Algebra",[
+"Boolean Expressions","AND Gate","OR Gate",
+"NOT Gate","NAND Gate","NOR Gate",
+"XOR Gate","XNOR Gate","Truth Tables",
+"De Morgan's Laws"
+]],
+
+["Programming Fundamentals",[
+"Algorithms","Flowcharts","Pseudocode",
+"Variables","Constants","Data Types",
+"Operators","Conditional Statements",
+"Loops","Arrays","Functions","Recursion",
+"Debugging"
+]],
+
+["C / C++ Basics",[
+"Program Structure","Input and Output",
+"Variables","Operators","If-Else",
+"Switch","For Loop","While Loop",
+"Do-While Loop","Arrays","Strings",
+"Functions","Pointers Basics",
+"Structures","File Handling Basics"
+]],
+
+["Databases",[
+"Database Concepts","DBMS",
+"Relational Databases","Tables","Records",
+"Fields","Primary Keys","Foreign Keys",
+"SQL Basics","SELECT","INSERT",
+"UPDATE","DELETE"
+]],
+
+["Computer Networks",[
+"LAN","MAN","WAN","Network Topologies",
+"Internet","IP Address","DNS",
+"HTTP / HTTPS","TCP / IP",
+"Network Devices"
+]],
+
+["Operating Systems",[
+"Operating System Functions",
+"Types of Operating Systems",
+"Process Management","Memory Management",
+"File Management","Windows","Linux"
+]],
+
+["Software Engineering Basics",[
+"Software Development Life Cycle",
+"Requirement Analysis","Software Design",
+"Testing","Debugging","Maintenance"
+]],
+
+["Web and Internet Basics",[
+"HTML","CSS","JavaScript Basics",
+"Websites","Web Browsers","Search Engines",
+"Internet Security","Cybersecurity Basics"
+]]
+
+]
+}
+
+];
+
+/* =====================================================
+   DATABASE AND MIGRATION
+===================================================== */
+
+const KEY="studyquest_v2_data";
+
+function uid(){
+return "id_"+Date.now()+"_"+Math.random().toString(36).slice(2,9);
+}
+
+function initialData(){
+return {
+version:2,
+name:"Student",
+examDate:"",
+subjects:SYLLABUS.map(s=>({
+id:uid(),
+name:s.name,
+chapters:s.chapters.map(c=>({
+id:uid(),
+name:c[0],
+topics:c[1].map(t=>({
+id:uid(),name:t,done:false,completedAt:null
+}))
+}))
+})),
+sessions:[],
+goals:{},
+timer:{subjectId:null,seconds:0,running:false,startedAt:null},
+legacyUnmatched:[],
+createdAt:new Date().toISOString()
+};
+}
+
+let db;
+
+function normalize(s){
+return String(s||"").toLowerCase().replace(/[^a-z0-9]/g,"");
+}
+
+function migrateLegacy(old,fresh){
+if(!old || !Array.isArray(old.subjects))return fresh;
+
+const aliases={
+"Basic Mathematics":"Basic Mathematics",
+"Advanced Mathematics":"Advanced Mathematics",
+"English":"English",
+"IQ / Analytical Reasoning":"IQ / Analytical Reasoning",
+"Physics":"Physics",
+"Computer Science":"Computer Science"
+};
+
+let unmatched=[];
+
+old.subjects.forEach(os=>{
+const target=fresh.subjects.find(s=>normalize(s.name)===normalize(aliases[os.name]||os.name));
+
+if(!target){
+unmatched.push(os);
+return;
+}
+
+(os.chapters||[]).forEach(oc=>{
+const matchChapter=target.chapters.find(c=>normalize(c.name)===normalize(oc.name));
+
+(oc.topics||[]).forEach(ot=>{
+const name=typeof ot==="string"?ot:ot.name;
+const done=typeof ot==="object"&&!!ot.done;
+if(!done)return;
+
+let found=null;
+
+if(matchChapter){
+found=matchChapter.topics.find(t=>normalize(t.name)===normalize(name));
+}
+
+if(!found){
+const candidates=target.chapters.flatMap(c=>c.topics)
+.filter(t=>normalize(t.name)===normalize(name));
+if(candidates.length===1)found=candidates[0];
+}
+
+if(found){
+found.done=true;
+found.completedAt=new Date().toISOString();
+}else{
+unmatched.push({
+subject:os.name,
+chapter:oc.name,
+topic:name,
+done:true
+});
+}
+});
+});
+});
+
+if(Array.isArray(old.history)){
+fresh.sessions=old.history
+.filter(h=>Number.isFinite(Number(h.duration))&&Number(h.duration)>0)
+.map(h=>({
+id:uid(),
+subjectId:fresh.subjects.find(s=>s.name===h.subject)?.id||null,
+subjectName:h.subject||"Unknown",
+seconds:Number(h.duration),
+date:h.date||dateKey()
+}));
+}
+
+if(Array.isArray(old.goals)){
+old.goals.forEach(g=>{
+const s=fresh.subjects.find(x=>x.name===g.sub);
+if(s)fresh.goals[s.id]=Math.max(0,Number(g.target)||0);
+});
+}
+
+fresh.legacyUnmatched=unmatched;
+return fresh;
+}
+
+function loadData(){
+try{
+const saved=localStorage.getItem(KEY);
+if(saved){
+const parsed=JSON.parse(saved);
+if(parsed.version===2&&Array.isArray(parsed.subjects))return parsed;
+}
+}catch(e){}
+
+let fresh=initialData();
+
+try{
+const legacy=localStorage.getItem("studyquest_data");
+if(legacy)fresh=migrateLegacy(JSON.parse(legacy),fresh);
+}catch(e){}
+
+return fresh;
+}
+
+function save(){
+try{
+localStorage.setItem(KEY,JSON.stringify(db));
+}catch(e){
+alert("Storage error. Please export a backup.");
+}
+}
+
+function dateKey(d=new Date()){
+const y=d.getFullYear();
+const m=String(d.getMonth()+1).padStart(2,"0");
+const day=String(d.getDate()).padStart(2,"0");
+return `${y}-${m}-${day}`;
+}
+
+function safeText(text){
+return String(text??"").replace(/[&<>"']/g,c=>({
+"&":"&amp;","<":"&lt;",">":"&gt;",
+'"':"&quot;","'":"&#39;"
+}[c]));
+}
+
+/* =====================================================
+   PROGRESS
+===================================================== */
+
+function progress(subject){
+let total=0,done=0;
+subject.chapters.forEach(c=>c.topics.forEach(t=>{
+total++;
+if(t.done)done++;
+}));
+return {total,done,remaining:total-done,pct:total?Math.round(done/total*100):0};
+}
+
+function overall(){
+let total=0,done=0;
+db.subjects.forEach(s=>{
+const p=progress(s);
+total+=p.total;
+done+=p.done;
+});
+return {total,done,remaining:total-done,pct:total?Math.round(done/total*100):0};
+}
+
+function xp(){
+let done=overall().done;
+let completedChapters=0;
+
+db.subjects.forEach(s=>s.chapters.forEach(c=>{
+if(c.topics.length&&c.topics.every(t=>t.done))completedChapters++;
+}));
+
+return done*10+completedChapters*50+db.sessions.length*20;
+}
+
+function badges(){
+const p=overall();
+let b=[];
+if(p.done>=1)b.push("🌱 First Step");
+if(p.done>=10)b.push("⚡ 10 Topics");
+if(p.done>=50)b.push("🚀 50 Topics");
+if(p.done>=100)b.push("🏆 100 Topics");
+if(p.pct>=25)b.push("🥉 25% Complete");
+if(p.pct>=50)b.push("🥈 Halfway There");
+if(p.pct>=75)b.push("🥇 75% Complete");
+if(p.pct===100&&p.total>0)b.push("👑 Syllabus Master");
+if(db.sessions.length>=10)b.push("⏱️ Focus Warrior");
+if(streak()>=7)b.push("🔥 7-Day Streak");
+return b;
+}
+
+function streak(){
+const days=new Set(db.sessions.filter(s=>s.seconds>0).map(s=>s.date));
+let d=new Date();
+let n=0;
+
+if(!days.has(dateKey(d))){
+d.setDate(d.getDate()-1);
+}
+
+while(days.has(dateKey(d))){
+n++;
+d.setDate(d.getDate()-1);
+}
+return n;
+}
+
+/* =====================================================
+   NAVIGATION
+===================================================== */
+
+function page(id,btn){
+document.querySelectorAll(".page").forEach(p=>p.classList.remove("active"));
+document.getElementById(id).classList.add("active");
+
+document.querySelectorAll("nav button").forEach(b=>b.classList.remove("active"));
+btn.classList.add("active");
+
+render();
+window.scrollTo(0,0);
+}
+
+/* =====================================================
+   DASHBOARD
+===================================================== */
+
+function renderDashboard(){
+const p=overall();
+const experience=xp();
+const level=Math.floor(experience/250)+1;
+
+document.getElementById("greeting").textContent=`Welcome back, ${db.name}! 👋`;
+
+document.getElementById("overallPercent").textContent=p.pct+"%";
+document.getElementById("completedCount").textContent=p.done;
+document.getElementById("remainingCount").textContent=p.remaining;
+document.getElementById("overallBar").style.width=p.pct+"%";
+document.getElementById("overallDetails").textContent=
+`${p.done} of ${p.total} topics completed • ${p.remaining} remaining`;
+
+document.getElementById("streakValue").textContent=streak()+" 🔥";
+document.getElementById("xpValue").textContent=experience;
+document.getElementById("levelValue").textContent=level;
+document.getElementById("badgeCount").textContent=badges().length;
+
+const total=db.sessions.reduce((a,s)=>a+s.seconds,0);
+document.getElementById("totalHours").textContent=(total/3600).toFixed(1)+"h";
+
+document.getElementById("badges").textContent=badges().join("  •  ")||"Complete your first topic to unlock a badge.";
+
+let html="";
+db.subjects.forEach(s=>{
+const x=progress(s);
+html+=`
+<div style="margin:17px 0">
+<div class="row">
+<b>${safeText(s.name)}</b>
+<strong style="color:var(--cyan)">${x.pct}%</strong>
+</div>
+<div class="bar"><div class="fill" style="width:${x.pct}%"></div></div>
+<small>${x.done}/${x.total} complete • ${x.remaining} remaining</small>
+</div>`;
+});
+document.getElementById("dashboardSubjects").innerHTML=html;
+
+if(db.examDate){
+const today=new Date();
+today.setHours(0,0,0,0);
+const exam=new Date(db.examDate+"T00:00:00");
+const days=Math.ceil((exam-today)/86400000);
+document.getElementById("countdown").textContent=
+days>=0?`📅 ${days} days remaining until your entry test`:"📅 Your saved test date has passed.";
+}else{
+document.getElementById("countdown").textContent="📅 Set your entry test date in Settings.";
+}
+
+renderGoals();
+}
+
+/* =====================================================
+   SYLLABUS CHECKLIST
+===================================================== */
+
+const openedSubjects=new Set();
+const openedChapters=new Set();
+
+function renderSyllabus(){
+const query=document.getElementById("search").value.toLowerCase().trim();
+let html="";
+
+db.subjects.forEach(s=>{
+const p=progress(s);
+
+const chapters=s.chapters.map(c=>{
+const matching=c.topics.filter(t=>
+!query||
+t.name.toLowerCase().includes(query)||
+c.name.toLowerCase().includes(query)||
+s.name.toLowerCase().includes(query)
+);
+
+if(query&&!matching.length)return "";
+
+const done=c.topics.filter(t=>t.done).length;
+const cp=c.topics.length?Math.round(done/c.topics.length*100):0;
+const open=query||openedChapters.has(c.id);
+
+let topics=matching.map(t=>`
+<div class="topic ${t.done?'done':''}">
+<input type="checkbox" ${t.done?"checked":""}
+onchange="toggleTopic('${s.id}','${c.id}','${t.id}',this.checked)">
+<span>${safeText(t.name)}</span>
+<button class="tiny secondary" onclick="editTopic('${s.id}','${c.id}','${t.id}')">✎</button>
+</div>
+`).join("");
+
+return `
+<div class="chapter">
+<div class="chapterHead" onclick="toggleChapter('${c.id}')">
+📘 ${safeText(c.name)}
+<small> (${done}/${c.topics.length} • ${cp}%)</small>
+</div>
+<div class="chapterBody" id="chapter_${c.id}" style="display:${open?'block':'none'}">
+${topics}
+<div class="actions">
+<button class="tiny" onclick="addTopic('${s.id}','${c.id}')">+ Topic</button>
+<button class="tiny secondary" onclick="renameChapter('${s.id}','${c.id}')">Rename</button>
+<button class="tiny red" onclick="deleteChapter('${s.id}','${c.id}')">Delete Chapter</button>
+</div>
+</div>
+</div>`;
+}).join("");
+
+if(query&&!chapters)return;
+
+const open=query||openedSubjects.has(s.id);
+
+html+=`
+<div class="subject">
+<div class="subjectHead" onclick="toggleSubject('${s.id}')">
+<div class="row">
+<b>${safeText(s.name)}</b>
+<strong style="color:var(--cyan)">${p.pct}%</strong>
+</div>
+<div class="bar"><div class="fill" style="width:${p.pct}%"></div></div>
+<small>${p.done}/${p.total} completed • ${p.remaining} remaining</small>
+</div>
+<div class="subjectBody" id="subject_${s.id}" style="display:${open?'block':'none'}">
+${chapters}
+<div class="actions">
+<button class="tiny" onclick="addChapter('${s.id}')">+ Chapter</button>
+<button class="tiny secondary" onclick="renameSubject('${s.id}')">Rename Subject</button>
+<button class="tiny red" onclick="deleteSubject('${s.id}')">Delete Subject</button>
+</div>
+</div>
+</div>`;
+});
+
+document.getElementById("syllabusList").innerHTML=
+html||"<p>No matching topics found.</p>";
+}
+
+function toggleSubject(id){
+if(openedSubjects.has(id))openedSubjects.delete(id);
+else openedSubjects.add(id);
+renderSyllabus();
+}
+
+function toggleChapter(id){
+if(openedChapters.has(id))openedChapters.delete(id);
+else openedChapters.add(id);
+renderSyllabus();
+}
+
+function expandAll(open){
+openedSubjects.clear();
+openedChapters.clear();
+if(open){
+db.subjects.forEach(s=>{
+openedSubjects.add(s.id);
+s.chapters.forEach(c=>openedChapters.add(c.id));
+});
+}
+renderSyllabus();
+}
+
+function toggleTopic(sid,cid,tid,value){
+const t=db.subjects.find(s=>s.id===sid)
+?.chapters.find(c=>c.id===cid)
+?.topics.find(t=>t.id===tid);
+
+if(!t)return;
+t.done=value;
+t.completedAt=value?new Date().toISOString():null;
+
+save();
+renderSyllabus();
+renderDashboard();
+}
+
+function getSubject(id){
+return db.subjects.find(s=>s.id===id);
+}
+
+function getChapter(sid,cid){
+return getSubject(sid)?.chapters.find(c=>c.id===cid);
+}
+
+function askName(message,current=""){
+const x=prompt(message,current);
+return x===null?null:x.trim();
+}
+
+function addSubject(){
+const name=askName("New subject name:");
+if(!name)return;
+const s={id:uid(),name,chapters:[]};
+db.subjects.push(s);
+openedSubjects.add(s.id);
+save();render();
+}
+
+function renameSubject(id){
+const s=getSubject(id);
+const name=askName("Subject name:",s.name);
+if(!name)return;
+s.name=name;
+save();render();
+}
+
+function deleteSubject(id){
+if(!confirm("Delete this subject and all its topics?"))return;
+db.subjects=db.subjects.filter(s=>s.id!==id);
+delete db.goals[id];
+if(db.timer.subjectId===id)db.timer.subjectId=null;
+save();render();
+}
+
+function addChapter(sid){
+const s=getSubject(sid);
+const name=askName("Chapter name:");
+if(!name)return;
+const c={id:uid(),name,topics:[]};
+s.chapters.push(c);
+openedSubjects.add(sid);
+openedChapters.add(c.id);
+save();render();
+}
+
+function renameChapter(sid,cid){
+const c=getChapter(sid,cid);
+const name=askName("Chapter name:",c.name);
+if(!name)return;
+c.name=name;
+save();render();
+}
+
+function deleteChapter(sid,cid){
+if(!confirm("Delete this chapter and its topics?"))return;
+const s=getSubject(sid);
+s.chapters=s.chapters.filter(c=>c.id!==cid);
+save();render();
+}
+
+function addTopic(sid,cid){
+const name=askName("Topic name:");
+if(!name)return;
+getChapter(sid,cid).topics.push({
+id:uid(),name,done:false,completedAt:null
+});
+openedSubjects.add(sid);
+openedChapters.add(cid);
+save();render();
+}
+
+function editTopic(sid,cid,tid){
+const c=getChapter(sid,cid);
+const t=c.topics.find(t=>t.id===tid);
+const name=askName("Edit topic name:",t.name);
+if(name===null)return;
+
+if(name===""){
+if(confirm("Delete this topic?")){
+c.topics=c.topics.filter(x=>x.id!==tid);
+}
+}else{
+t.name=name;
+}
+save();render();
+}
+
+/* =====================================================
+   STUDY TIMER
+===================================================== */
+
+let interval=null;
+let targetAlerted=false;
+
+function elapsed(){
+const t=db.timer;
+if(!t.running||!t.startedAt)return t.seconds;
+return t.seconds+Math.max(0,Math.floor((Date.now()-t.startedAt)/1000));
+}
+
+function formatTime(sec){
+sec=Math.max(0,Math.floor(sec));
+return [
+Math.floor(sec/3600),
+Math.floor(sec%3600/60),
+sec%60
+].map(n=>String(n).padStart(2,"0")).join(":");
+}
+
+function renderTimer(){
+const select=document.getElementById("timerSubject");
+const current=db.timer.subjectId;
+
+select.innerHTML=db.subjects.map(s=>
+`<option value="${s.id}">${safeText(s.name)}</option>`
+).join("");
+
+if(!getSubject(current)){
+db.timer.subjectId=db.subjects[0]?.id||null;
+}
+
+select.value=db.timer.subjectId||"";
+select.disabled=db.timer.running||elapsed()>0;
+
+updateTimerDisplay();
+}
+
+function selectTimerSubject(){
+db.timer.subjectId=document.getElementById("timerSubject").value;
+targetAlerted=false;
+save();
+updateTimerDisplay();
+}
+
+function updateTimerDisplay(){
+const t=db.timer;
+const sec=elapsed();
+
+document.getElementById("timer").textContent=formatTime(sec);
+
+const goal=db.goals[t.subjectId]||0;
+const today=secondsToday(t.subjectId);
+const pct=goal?Math.min(100,(today+sec)/60/goal*100):0;
+
+document.getElementById("timerBar").style.width=pct+"%";
+
+document.getElementById("timerTarget").textContent=
+goal?
+`Daily target: ${Math.round(goal)} minutes • ${(pct).toFixed(0)}%`:
+"No daily target set";
+
+if(goal&&pct>=100&&!targetAlerted&&t.running){
+targetAlerted=true;
+alert("🎉 Daily study target reached!");
+}
+}
+
+function startTimer(){
+if(db.timer.running)return;
+if(!db.timer.subjectId){
+alert("Please add a subject first.");
+return;
+}
+db.timer.startedAt=Date.now();
+db.timer.running=true;
+targetAlerted=false;
+save();
+interval=setInterval(updateTimerDisplay,1000);
+renderTimer();
+}
+
+function pauseTimer(){
+if(!db.timer.running)return;
+db.timer.seconds=elapsed();
+db.timer.running=false;
+db.timer.startedAt=null;
+clearInterval(interval);
+interval=null;
+save();
+renderTimer();
+}
+
+function finishTimer(){
+const sec=elapsed();
+if(sec<1){
+alert("No study time to save.");
+return;
+}
+
+pauseTimer();
+
+const subject=getSubject(db.timer.subjectId);
+
+db.sessions.push({
+id:uid(),
+subjectId:db.timer.subjectId,
+subjectName:subject?.name||"Deleted Subject",
+seconds:sec,
+date:dateKey(),
+completedAt:new Date().toISOString()
+});
+
+db.timer.seconds=0;
+db.timer.startedAt=null;
+targetAlerted=false;
+
+save();
+render();
+alert("✅ Study session saved! +" + 20 + " XP");
+}
+
+function resetTimer(){
+if(elapsed()>0&&!confirm("Discard unsaved study time?"))return;
+pauseTimer();
+db.timer.seconds=0;
+db.timer.startedAt=null;
+targetAlerted=false;
+save();
+renderTimer();
+}
+
+/* =====================================================
+   DAILY TARGETS
+===================================================== */
+
+function secondsToday(sid){
+return db.sessions
+.filter(s=>s.date===dateKey()&&(!sid||s.subjectId===sid))
+.reduce((a,s)=>a+s.seconds,0);
+}
+
+function renderGoals(){
+const dashboard=document.getElementById("dashboardGoals");
+const editor=document.getElementById("goalEditor");
+
+let dh="",eh="";
+
+db.subjects.forEach(s=>{
+const target=db.goals[s.id]||0;
+const done=secondsToday(s.id);
+const pct=target?Math.min(100,done/(target*60)*100):0;
+
+dh+=`
+<div class="goal">
+<div class="row">
+<b>${safeText(s.name)}</b>
+<small>${Math.floor(done/60)} / ${target} min</small>
+</div>
+<div class="bar"><div class="fill" style="width:${pct}%"></div></div>
+<small>${target?Math.round(pct)+"% complete":"No target set"}</small>
+</div>`;
+
+eh+=`
+<div class="goal">
+<label>${safeText(s.name)}</label>
+<div class="row" style="margin-top:8px">
+<input type="number" min="0" max="1440"
+id="goal_${s.id}" value="${target}" style="width:65%">
+<button onclick="saveGoal('${s.id}')">Save</button>
+</div>
+<small>Daily target in minutes. Example: 180 = 3 hours.</small>
+</div>`;
+});
+
+dashboard.innerHTML=dh;
+editor.innerHTML=eh;
+}
+
+function saveGoal(id){
+const v=Number(document.getElementById("goal_"+id).value);
+if(!Number.isFinite(v)||v<0||v>1440){
+alert("Enter a value between 0 and 1440 minutes.");
+return;
+}
+db.goals[id]=Math.round(v);
+save();renderGoals();updateTimerDisplay();
+}
+
+/* =====================================================
+   ANALYTICS
+===================================================== */
+
+function renderAnalytics(){
+const today=secondsToday();
+const all=db.sessions.reduce((a,s)=>a+s.seconds,0);
+
+const cutoff=new Date();
+cutoff.setHours(0,0,0,0);
+cutoff.setDate(cutoff.getDate()-6);
+
+const week=db.sessions.filter(s=>
+s.date>=dateKey(cutoff)&&s.date<=dateKey()
+).reduce((a,s)=>a+s.seconds,0);
+
+document.getElementById("todayStat").textContent=Math.floor(today/60)+"m";
+document.getElementById("weekStat").textContent=(week/3600).toFixed(1)+"h";
+document.getElementById("sessionStat").textContent=db.sessions.length;
+document.getElementById("allTimeStat").textContent=(all/3600).toFixed(1)+"h";
+
+let subjects="";
+
+db.subjects.forEach(s=>{
+const seconds=db.sessions.filter(x=>x.subjectId===s.id)
+.reduce((a,x)=>a+x.seconds,0);
+const pct=all?seconds/all*100:0;
+
+subjects+=`
+<div style="margin:15px 0">
+<div class="row">
+<span>${safeText(s.name)}</span>
+<b>${(seconds/3600).toFixed(1)}h</b>
+</div>
+<div class="bar"><div class="fill" style="width:${pct}%"></div></div>
+</div>`;
+});
+
+document.getElementById("subjectAnalytics").innerHTML=subjects;
+
+let weekly="";
+for(let i=6;i>=0;i--){
+const d=new Date();
+d.setDate(d.getDate()-i);
+const key=dateKey(d);
+const seconds=db.sessions.filter(s=>s.date===key)
+.reduce((a,s)=>a+s.seconds,0);
+
+weekly+=`
+<div class="row" style="margin:12px 0">
+<span>${key}</span>
+<b>${Math.floor(seconds/60)} min</b>
+</div>
+<div class="bar"><div class="fill" style="width:${Math.min(100,seconds/28800*100)}%"></div></div>`;
+}
+
+document.getElementById("weeklyChart").innerHTML=weekly;
+
+const logs=[...db.sessions].reverse().slice(0,50).map(s=>`
+<div class="log">
+<b>${safeText(s.subjectName)}</b><br>
+<small>${safeText(s.date)} • ${formatTime(s.seconds)}</small>
+</div>
+`).join("");
+
+document.getElementById("historyList").innerHTML=logs||"<p>No sessions yet.</p>";
+}
+
+/* =====================================================
+   SETTINGS / BACKUPS
+===================================================== */
+
+function renderSettings(){
+document.getElementById("studentName").value=db.name;
+document.getElementById("examDate").value=db.examDate;
+}
+
+function saveSettings(){
+const name=document.getElementById("studentName").value.trim();
+db.name=name||"Student";
+db.examDate=document.getElementById("examDate").value;
+save();
+renderDashboard();
+alert("Settings saved!");
+}
+
+function exportBackup(){
+save();
+
+const blob=new Blob([JSON.stringify(db,null,2)],{type:"application/json"});
+const url=URL.createObjectURL(blob);
+const a=document.createElement("a");
+
+a.href=url;
+a.download="StudyQuest_Backup_"+dateKey()+".json";
+document.body.appendChild(a);
+a.click();
+a.remove();
+
+setTimeout(()=>URL.revokeObjectURL(url),10000);
+}
+
+function validBackup(x){
+return x&&x.version===2&&
+Array.isArray(x.subjects)&&
+x.subjects.every(s=>
+typeof s.id==="string"&&
+typeof s.name==="string"&&
+Array.isArray(s.chapters)&&
+s.chapters.every(c=>
+typeof c.id==="string"&&
+typeof c.name==="string"&&
+Array.isArray(c.topics)&&
+c.topics.every(t=>typeof t.id==="string"&&typeof t.name==="string"&&typeof t.done==="boolean")
+)
+)&&
+Array.isArray(x.sessions)&&
+x.timer&&typeof x.timer==="object";
+}
+
+function importBackup(event){
+const file=event.target.files[0];
+if(!file)return;
+
+const reader=new FileReader();
+
+reader.onload=()=>{
+try{
+const data=JSON.parse(reader.result);
+
+if(!validBackup(data))throw Error("Invalid format");
+
+if(!confirm("Replace current progress with this backup?"))return;
+
+clearInterval(interval);
+data.timer.running=false;
+data.timer.startedAt=null;
+data.timer.seconds=Number(data.timer.seconds)||0;
+
+db=data;
+db.goals=db.goals||{};
+save();
+openedSubjects.clear();
+openedChapters.clear();
+render();
+
+alert("✅ Backup imported successfully!");
+}catch(e){
+alert("Unable to import this backup.");
+}
+};
+
+reader.readAsText(file);
+event.target.value="";
+}
+
+function resetApp(){
+if(!confirm("Delete ALL progress, topics and study history?"))return;
+if(!confirm("This cannot be undone without a backup. Continue?"))return;
+
+clearInterval(interval);
+db=initialData();
+save();
+openedSubjects.clear();
+openedChapters.clear();
+render();
+}
+
+/* =====================================================
+   RENDER
+===================================================== */
+
+function render(){
+renderDashboard();
+renderSyllabus();
+renderTimer();
+renderAnalytics();
+renderSettings();
+}
+
+/* =====================================================
+   INITIALIZATION
+===================================================== */
+
+db=loadData();
+
+if(!Array.isArray(db.sessions))db.sessions=[];
+if(!db.goals||typeof db.goals!=="object")db.goals={};
+if(!db.timer)db.timer={subjectId:null,seconds:0,running:false,startedAt:null};
+
+if(!db.timer.subjectId){
+db.timer.subjectId=db.subjects[0]?.id||null;
+}
+
+if(db.timer.running){
+db.timer.seconds=elapsed();
+db.timer.running=false;
+db.timer.startedAt=null;
+}
+
+save();
+render();
+
+setInterval(()=>{
+if(db.timer.running)updateTimerDisplay();
+},1000);
+
+</script>
+</body>
+</html>
